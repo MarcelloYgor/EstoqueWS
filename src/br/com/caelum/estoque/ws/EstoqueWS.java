@@ -12,6 +12,9 @@ import javax.xml.ws.ResponseWrapper;
 import br.com.caelum.estoque.modelo.item.Filtros;
 import br.com.caelum.estoque.modelo.item.Item;
 import br.com.caelum.estoque.modelo.item.ItemDao;
+import br.com.caelum.estoque.modelo.item.ItemValidador;
+import br.com.caelum.estoque.modelo.usuario.TokenDao;
+import br.com.caelum.estoque.modelo.usuario.TokenUsuario;
 
 @WebService
 public class EstoqueWS {
@@ -25,5 +28,22 @@ public class EstoqueWS {
 	public List<Item> getItens(@WebParam(name="filtros") Filtros filtros) {
 		System.out.println("Chamando getItens");
 		return dao.todosItens();
+	}
+	
+	@WebMethod(operationName="CadastrarItem")
+	@WebResult(name="item")
+	public Item cadastrarItem(
+			@WebParam(name="tokenUsuario", header=true) TokenUsuario token, 
+			@WebParam(name="item") Item item) throws AutorizacaoException {
+		System.out.println("Cadastrando " + item + ", " + token);
+		
+		if(! new TokenDao().ehValido(token)) {
+			throw new AutorizacaoException("Token inválido");
+		}
+		
+		new ItemValidador(item).validate();
+		
+		this.dao.cadastrar(item);
+		return item;
 	}
 }
